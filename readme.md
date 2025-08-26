@@ -145,6 +145,11 @@ Push your branch:
 
 _Open a Pull Request!_
 
+### Contributions
+
+[Rizzo - Lib THv404] [GunBound Thor's Hammer Lib - By Rizzo](https://github.com/samuelrizzo/gunbound-th-plugin-dll).
+
+Thanks a lot Rizzo!
 
 ### Credits / Contributors
 
