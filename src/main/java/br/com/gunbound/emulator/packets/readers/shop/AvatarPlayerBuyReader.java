@@ -55,9 +55,11 @@ public class AvatarPlayerBuyReader {
 
 			if (avatarData != null) {
 				int priceAvatar = avatarData.getPriceByGoldForI();
-				String highestPlaceOrder = player.getAvatarWithHighestPlaceOrder().getPlaceOrder();
+				
+				PlayerAvatar highestAvatar = player.getAvatarWithHighestPlaceOrder();
+				String highestPlaceOrder = (highestAvatar != null) ? highestAvatar.getPlaceOrder() : null;
 
-				// calculo do place order (util apenas no WC pra frente)
+				// calculo do place order 
 				if (highestPlaceOrder == null) {
 					highestPlaceOrder = "0";
 				} else {
