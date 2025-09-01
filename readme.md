@@ -177,6 +177,7 @@ Thanks a lot Rizzo!
 
 ![Game Room](https://raw.githubusercontent.com/kyll3r/GunBound-Java/refs/heads/main/images/1.jpg)
 ![Game Play](https://raw.githubusercontent.com/kyll3r/GunBound-Java/refs/heads/main/images/2.png)
+![Avatar Shop](https://raw.githubusercontent.com/kyll3r/GunBound-Java/refs/heads/main/images/3.jpg)
 
 ## License
 
