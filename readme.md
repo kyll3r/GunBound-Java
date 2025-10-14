@@ -179,6 +179,10 @@ Thanks a lot Rizzo!
 ![Game Play](https://raw.githubusercontent.com/kyll3r/GunBound-Java/refs/heads/main/images/2.png)
 ![Avatar Shop](https://raw.githubusercontent.com/kyll3r/GunBound-Java/refs/heads/main/images/3.jpg)
 
+###### Do you just wanna Play? Join us!
+
+[GunBound Legacy Project](http://www.gunbound.site).
+
 ## License
 
 This project is licensed under the MIT License. See LICENSE.txt for details.
