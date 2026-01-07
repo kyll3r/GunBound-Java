@@ -24,7 +24,7 @@ public class RoomChangeItemReader {
 		}
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processChangeUseItem(payload, masterPlayer, room));
+		room.submitAction(() -> processChangeUseItem(payload, masterPlayer, room),ctx);
 	}
 
 	private static void processChangeUseItem(byte[] payload, PlayerSession player,

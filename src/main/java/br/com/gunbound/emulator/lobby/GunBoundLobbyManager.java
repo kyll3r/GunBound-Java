@@ -169,8 +169,8 @@ public class GunBoundLobbyManager {
 
 				ByteBuf notificationPacket = PacketUtils.generatePacket(existingPlayer, OPCODE_PLAYER_JOINED,
 						notificationPayload,false);
-				existingPlayer.getPlayerCtx().eventLoop().execute(() -> {
-					existingPlayer.getPlayerCtx().writeAndFlush(notificationPacket);
+				existingPlayer.getPlayerCtxChannel().eventLoop().execute(() -> {
+					existingPlayer.getPlayerCtxChannel().writeAndFlush(notificationPacket);
 				});
 			}
 
@@ -226,8 +226,8 @@ public class GunBoundLobbyManager {
 					notificationPayload,false);
 			System.out.println(leavingPlayer.getNickName() + " Saiu e " + remainingPlayer.getNickName() + " ["
 					+ remainingPlayer.getChannelPosition() + "] Foi notificado");
-			remainingPlayer.getPlayerCtx().eventLoop().execute(() -> {
-				remainingPlayer.getPlayerCtx().writeAndFlush(notificationPacket);
+			remainingPlayer.getPlayerCtxChannel().eventLoop().execute(() -> {
+				remainingPlayer.getPlayerCtxChannel().writeAndFlush(notificationPacket);
 			});
 		}
 

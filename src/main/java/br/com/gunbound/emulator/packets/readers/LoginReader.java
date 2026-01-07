@@ -117,7 +117,7 @@ public class LoginReader {
 				ctx.channel().attr(GameAttributes.CLIENT_VERSION).set(clientVersion);
 
 				// Cria a sessão do jogador
-				PlayerSession session = new PlayerSession(queriedUser, ctx.channel());
+				PlayerSession session = new PlayerSession(queriedUser, ctx);
 				// --- Parte 4: Finalizar configuração da sessão e entrar no canal ---
 				PlayerSessionManager.getInstance().addPlayer(session);
 				ctx.channel().attr(GameAttributes.USER_SESSION).set(session);
@@ -172,7 +172,7 @@ public class LoginReader {
 
 		// --- Campos do Pacote ---
 		buffer.writeBytes(new byte[] { 0x00, 0x00 }); // ????
-		buffer.writeBytes(session.getPlayerCtx().attr(GameAttributes.SESSION_UNIQUE).get()); // session_unique
+		buffer.writeBytes(session.getPlayerCtxChannel().attr(GameAttributes.SESSION_UNIQUE).get()); // session_unique
 																								// (4 bytes)
 		buffer.writeBytes(Utils.resizeBytes(session.getNickName().getBytes(StandardCharsets.ISO_8859_1), 0xC)); // Username
 		buffer.writeByte(session.getGender());

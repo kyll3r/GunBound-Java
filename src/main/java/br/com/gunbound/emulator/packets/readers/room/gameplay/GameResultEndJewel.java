@@ -69,7 +69,7 @@ public class GameResultEndJewel {
 			try {
 
 				encryptedPayload = GunBoundCipher.gunboundDynamicEncrypt(payload, player.getUserNameId(),
-						player.getPassword(), player.getPlayerCtx().attr(GameAttributes.AUTH_TOKEN).get(),
+						player.getPassword(), player.getPlayerCtxChannel().attr(GameAttributes.AUTH_TOKEN).get(),
 						OPCODE_CONFIRMATION);
 
 				// 4. Gera o pacote final e envia
@@ -78,8 +78,8 @@ public class GameResultEndJewel {
 						Unpooled.wrappedBuffer(encryptedPayload),false);
 
 				// Enviando packet
-				player.getPlayerCtx().eventLoop().execute(() -> {
-					player.getPlayerCtx().writeAndFlush(finalPacket);
+				player.getPlayerCtxChannel().eventLoop().execute(() -> {
+					player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 				});
 
 			} catch (Exception e) {

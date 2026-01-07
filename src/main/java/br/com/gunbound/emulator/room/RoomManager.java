@@ -104,15 +104,16 @@ public final class RoomManager {
 				// 3. Se a sala não ficou vazia:
 				
 				// Notifica a todos sobre o slot que foi liberado.
-				room.submitAction(() -> room.notifyPlayerLeft(removedPlayerSlot));
+				//room.submitAction(() -> room.notifyPlayerLeft(removedPlayerSlot));
+				room.notifyPlayerLeft(removedPlayerSlot,wasHost);
 				
 				
 				// Se quem saiu era o host, notifica sobre a migração.
-				if (wasHost) {
-					System.out.println("[DEBUG]: Entrou no if de washost" );
+				//if (wasHost) {
+					//System.out.println("[DEBUG]: Entrou no if de washost" );
 					//room.notifyHostMigration();
-					room.submitAction(() -> room.notifyHostMigration());
-				}
+					//room.submitAction(() -> room.notifyHostMigration());
+				//}
 				
 
 			}

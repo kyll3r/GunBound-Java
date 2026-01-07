@@ -25,7 +25,7 @@ public class RoomChangeMapReader {
 		}
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processChangeStage(payload, player, room));
+		room.submitAction(() -> processChangeStage(payload, player, room),ctx);
 	}
 
 	private static void processChangeStage(byte[] payload, PlayerSession player,

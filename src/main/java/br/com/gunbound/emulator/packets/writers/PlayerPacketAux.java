@@ -12,7 +12,7 @@ public class PlayerPacketAux {
 	public static void cashUpdate(PlayerSession ps) {
 
 		// 1. Obtém os dados de sessão do canal.
-		byte[] authToken = ps.getPlayerCtx().attr(GameAttributes.AUTH_TOKEN).get();
+		byte[] authToken = ps.getPlayerCtxChannel().attr(GameAttributes.AUTH_TOKEN).get();
 		//int currentTxSum = ps.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
 
 		// 2. Verifica se o usuário e o token estão disponíveis.
@@ -45,7 +45,7 @@ public class PlayerPacketAux {
 			successPacket = PacketUtils.generatePacket(ps, 0x6101, successPacket,false);
 			
 			//testando opcoes
-			ps.getPlayerCtx().writeAndFlush(successPacket);
+			ps.getPlayerCtxChannel().writeAndFlush(successPacket);
 			System.out.println("Chego aqui? Token Test:" + Utils.bytesToHex(authToken));
 			// successPacket.release(); // Libera o payload após o uso. nao pode liberar
 			// aqui se não ferra a conexao

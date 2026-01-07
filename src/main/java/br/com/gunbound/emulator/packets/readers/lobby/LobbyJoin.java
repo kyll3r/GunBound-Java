@@ -159,7 +159,7 @@ public class LobbyJoin {
 		// O construtor do pacote espera uma ArrayList, então fazemos a conversão.
 		ArrayList<PlayerSession> usersInLobby = new ArrayList<>(playersInLobby);
 
-		String clientVersion = String.valueOf(player.getPlayerCtx().attr(GameAttributes.CLIENT_VERSION).get());
+		String clientVersion = String.valueOf(player.getPlayerCtxChannel().attr(GameAttributes.CLIENT_VERSION).get());
 		String motd = "#GunBound Legacy Thor's Hammer"; // Mensagem do dia (pode ser configurável)
 
 		// Cria o objeto do pacote com os dados
@@ -174,7 +174,7 @@ public class LobbyJoin {
 				joinChannelPayload,false);
 
 		// Envia o pacote para o cliente
-		player.getPlayerCtx().writeAndFlush(finalPacket);
+		player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 
 		System.out.println("GS: Pacote de entrada no canal (0x2001) enviado para " + player.getNickName());
 		//return joinChannelPayload;

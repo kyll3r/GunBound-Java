@@ -25,7 +25,7 @@ public class RoomChangeCapacityReader {
 		}
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processChangeMaxMen(payload, player, room));
+		processChangeMaxMen(payload, player, room);
 	}
 
 	private static void processChangeMaxMen(byte[] payload, PlayerSession player,

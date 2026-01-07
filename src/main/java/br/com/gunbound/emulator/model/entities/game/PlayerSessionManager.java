@@ -24,7 +24,7 @@ public final class PlayerSessionManager {
     }
 
     public void addPlayer(PlayerSession playerSession) {
-        Channel channel = playerSession.getPlayerCtx(); // nome do campo ctx mantido
+        Channel channel = playerSession.getPlayerCtxChannel(); // nome do campo ctx mantido
         String nick = playerSession.getNickName().toLowerCase();
 
         byNettyChannelId.put(channel.id(), playerSession);

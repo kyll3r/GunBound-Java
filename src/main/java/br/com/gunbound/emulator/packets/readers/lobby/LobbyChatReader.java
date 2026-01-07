@@ -61,7 +61,7 @@ public class LobbyChatReader {
 			//for (PlayerSession recipient : sender.getCurrentLobby().getPlayersInLobby().values()) {
 			try {
 				// 3. Encripta o payload para cada destinatário.
-				byte[] authToken = recipient.getPlayerCtx().attr(GameAttributes.AUTH_TOKEN).get();
+				byte[] authToken = recipient.getPlayerCtxChannel().attr(GameAttributes.AUTH_TOKEN).get();
 
 				// Enviamos aqui o chatPayload (byte[]) diretamente para a função de
 				// encriptação.
@@ -76,8 +76,8 @@ public class LobbyChatReader {
 				System.out.println("[DEBUG] Mensagem de: " + sender.getNickName() + " sendo enviada para : "
 						+ recipient.getNickName() + " no Canal ID: " + sender.getCurrentLobby().getId());
 
-				recipient.getPlayerCtx().eventLoop().execute(() -> {
-					recipient.getPlayerCtx().writeAndFlush(finalPacket);
+				recipient.getPlayerCtxChannel().eventLoop().execute(() -> {
+					recipient.getPlayerCtxChannel().writeAndFlush(finalPacket);
 				});
 
 			} catch (Exception e) {

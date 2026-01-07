@@ -46,7 +46,7 @@ public class RoomCommandReader {
 			// deixa fechar se for Master (alterar para authority > 99
 			checkIfaRoomMaster(player, room);
 			MessageBcmReader.printMsgToPlayer(player, "The Room Was Closed");
-			room.submitAction(() -> closeRoom(player, room));
+			room.submitAction(() -> closeRoom(player, room),ctx);
 		} else if (command.equals("bcm")) {
 			MessageBcmReader.broadcastSendMessage(paramCmd);
 		}else {
@@ -64,13 +64,13 @@ public class RoomCommandReader {
 			ByteBuf confirmationPacket = PacketUtils.generatePacket(playerInRoom, OPCODE_CONFIRMATION_CMD,
 					Unpooled.EMPTY_BUFFER, false);
 
-			playerInRoom.getPlayerCtx().writeAndFlush(confirmationPacket)
+			playerInRoom.getPlayerCtxChannel().writeAndFlush(confirmationPacket)
 					.addListener((ChannelFutureListener) future -> {
 						if (!future.isSuccess()) {
 							System.err.println("Falha ao fechar sala para: " + playerInRoom.getNickName());
 							future.cause().printStackTrace();
 							// Caso o jogador nao esteja impossibilitado de receber pacotes.
-							playerInRoom.getPlayerCtx().close();
+							playerInRoom.getPlayerCtxChannel().close();
 						} else {
 							System.out.println("RoomID: " + (room.getRoomId() + 1) + ", Command Sent: '0x"
 									+ Integer.toHexString(OPCODE_CONFIRMATION_CMD) + "'");

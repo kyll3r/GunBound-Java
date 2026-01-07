@@ -25,7 +25,7 @@ public class RoomChangeTeamReader {
 		}
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processSelectTeam(payload, player, room));
+		processSelectTeam(payload, player, room);
 	}
 
 	private static void processSelectTeam(byte[] payload, PlayerSession player,
@@ -44,7 +44,7 @@ public class RoomChangeTeamReader {
 			//int playerTxSum = player.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
 			ByteBuf confirmationPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION,
 					Unpooled.EMPTY_BUFFER, true);
-			player.getPlayerCtx().writeAndFlush(confirmationPacket);
+			player.getPlayerCtxChannel().writeAndFlush(confirmationPacket);
 
 			// 4. Pede para a sala notificar todos os jogadores sobre a atualização geral.
 			room.broadcastRoomUpdate();

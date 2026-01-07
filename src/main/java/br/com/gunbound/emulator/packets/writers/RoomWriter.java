@@ -58,7 +58,7 @@ public final class RoomWriter {
 		// Info de Conexão UDP
 		try {
 			byte[] playerIp = InetAddress
-					.getByName(newPlayer.getPlayerCtx().remoteAddress().toString().split(":")[0].substring(1))
+					.getByName(newPlayer.getPlayerCtxChannel().remoteAddress().toString().split(":")[0].substring(1))
 					.getAddress();
 			buffer.writeBytes(playerIp);
 			buffer.writeShort(19363); // Porta UDP
@@ -105,7 +105,13 @@ public final class RoomWriter {
 		// Gera um pacote com a sequência CORRETA para este jogador.
 		ByteBuf notifyPacket = PacketUtils.generatePacket(player, OPCODE_ROOM_UPDATE, notifyPayload, true);
 		// Envia o pacote individualmente.
-		player.getPlayerCtx().writeAndFlush(notifyPacket);
+		
+		
+		GameRoom room = player.getCurrentRoom();
+		
+		room.submitAction(() -> 
+		player.getPlayerCtxChannel().writeAndFlush(notifyPacket)
+		,player.getPlayerCtx());
 	}
 
 	/**

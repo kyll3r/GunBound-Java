@@ -5,13 +5,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import br.com.gunbound.emulator.handlers.GameAttributes;
 import br.com.gunbound.emulator.model.entities.game.PlayerGameResult;
@@ -27,6 +30,7 @@ import br.com.gunbound.emulator.utils.crypto.GunBoundCipher;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 
 public class GameRoom {
 
@@ -54,10 +58,14 @@ public class GameRoom {
 	private final Map<Integer, Boolean> readyStatusBySlot = new ConcurrentHashMap<>(); // Posição (slot) -> Status de
 																						// Pronto
 
-	// Quando a partida é score ajustar os placares baseados na qtd de player da
-	// sala
+	// Quando a partida é score ajustar os placares baseados na qtd de player da sala
 	int scoreTeamA = 0;
 	int scoreTeamB = 0;
+	
+	
+	//Flag para ter apenas um endGame por partida se não vira bagunça
+	private final AtomicBoolean endGameTriggered = new AtomicBoolean(false);
+
 
 	// Fila thread-safe que mantém os IDs disponíveis, sempre oferecendo o menor
 	// primeiro.
@@ -214,30 +222,33 @@ public class GameRoom {
 		this.scoreTeamB = scoreTeamB;
 	}
 	
+	public boolean isAscoreRoom() {
+		return GameMode.fromId(getGameMode()).equals(GameMode.SCORE);
+	}
+	
 	
 	public void setScoreTeam(int teamId) {
-		if (teamId == 0) {
-			setScoreTeamA(getScoreTeamA()-1);
-		} else if (teamId == 1) {
-			setScoreTeamB(getScoreTeamB()-1);
-		}
+	    if (teamId == 0) {
+	        int newScore = Math.max(getScoreTeamA() - 1, 0);
+	        setScoreTeamA(newScore);
+	        System.out.println("[DEBUG] Novo Score Team A: " + getScoreTeamA());
+	    } else if (teamId == 1) {
+	        int newScore = Math.max(getScoreTeamB() - 1, 0);
+	        setScoreTeamB(newScore);
+	        System.out.println("[DEBUG] Novo Score Team B: " + getScoreTeamB());
+	    }
 	}
 
 	public boolean isTeamHasScore(int teamId) {
-		int checkScoreTeam = 0;
-
-		if (teamId == 0) {
-			checkScoreTeam = getScoreTeamA();
-		} else if (teamId == 1) {
-			checkScoreTeam = getScoreTeamB();
-		}
-
-		if (checkScoreTeam > 0) {
-			return true;
-		} else {
-			return false;
-		}
+	    int checkScoreTeam = 0;
+	    if (teamId == 0) {
+	        checkScoreTeam = getScoreTeamA();
+	    } else if (teamId == 1) {
+	        checkScoreTeam = getScoreTeamB();
+	    }
+	    return checkScoreTeam > 0;
 	}
+	
 
 	/**
 	 * Verifica se ainda há jogadores vivos em uma equipe específica.
@@ -256,6 +267,53 @@ public class GameRoom {
 		// Se o loop terminar, significa que nenhum jogador vivo foi encontrado nesta
 		// equipe.
 		return false;
+	}
+	
+	
+	
+	/**
+	 * Tenta ativar o flag de fim de jogo. 
+	 * Garante que o endgame só será processado uma única vez por partida.
+	 * ---------------
+	 * O método compareAndSet(false, true) verifica se o valor atual é false: 
+	 * Se for, coloca como true e retorna true (indica que você foi o primeiro a disparar).
+	 * Se já estiver true, retorna false (outro fluxo já disparou/finalizou antes).
+	 *----------------
+	 * @return true se é a primeira vez que está sendo chamado, false se já foi disparado antes.
+	 */
+	public boolean tryTriggerEndGame() {
+
+	    return endGameTriggered.compareAndSet(false, true);
+	}
+
+	/**
+	 * Reseta o controle do flag de endgame, permitindo que uma nova partida processe o fim normalmente.
+	 * Deve ser chamado após preparar a sala para uma nova partida.
+	 */
+	public void resetEndGameFlag() {
+	    endGameTriggered.set(false);
+	}
+
+	/**
+	 * Realiza toda a checagem se o jogo atingiu condição de fim.
+	 * Se sim, retorna o time vencedor.
+	 * 
+	 * Regras:
+	 * - Em modo SCORE: 
+	 *      O time que zerar o placar perde. Retorna o ID do time vencedor.
+	 * - Em outros modos:
+	 *      O time que não tem mais jogadores vivos perde. Retorna ID do vencedor.
+	 * 
+	 * @return 0 se o time A venceu, 1 se o time B venceu, -1 se a partida não finalizou ainda.
+	 */
+	public int checkGameEndAndGetWinner() {
+	    if (isAscoreRoom()) {
+	        if (!isTeamHasScore(0)) return 1;
+	        if (!isTeamHasScore(1)) return 0;
+	    }
+	    if (!isTeamAlive(0)) return 1;
+	    if (!isTeamAlive(1)) return 0;
+	    return -1;
 	}
 
 	/**
@@ -448,6 +506,9 @@ public class GameRoom {
 		 * println("Tentativa de iniciar o jogo, mas nem todos estão prontos."); return;
 		 * }
 		 */
+		
+		//Caso a sala teve um jogo anterior reseta a flag de endGame
+		this.resetEndGameFlag(); 
 
 		this.isGameStarted = true;
 		System.out.println("Iniciando jogo na sala " + (roomId + 1));
@@ -513,7 +574,7 @@ public class GameRoom {
 		Collections.shuffle(turnOrder);
 
 		// 5. Baseado no estilo de jogo seta o score padrao
-		if (GameMode.fromId(gameMode).equals(GameMode.SCORE)) {
+		if (isAscoreRoom()) {
 			int size = playersBySlot.size() / 2;
 			// verifica se as equipes estao desbalanceadas (Ex: Gm start 3x2)
 			size = (size % 2 == 0) ? size : size + 1;
@@ -522,7 +583,11 @@ public class GameRoom {
 			setScoreTeamB(size + 1);
 			
 			System.out.println("DEBUG Entrou no if do Score: " + GameMode.fromId(gameMode).getName());
+			System.out.println("ScoreTeam A" + getScoreTeamA());
+			System.out.println("ScoreTeam B" + getScoreTeamA());
 		}
+		
+
 
 		// 6. Constrói e envia o pacote de início
 		ByteBuf startPayload = Unpooled
@@ -537,7 +602,7 @@ public class GameRoom {
 						startPayload.retainedDuplicate().array(), // Usa o array com
 						// padding
 						player.getUserNameId(), player.getPassword(),
-						player.getPlayerCtx().attr(GameAttributes.AUTH_TOKEN).get(), OPCODE_START_GAME);
+						player.getPlayerCtxChannel().attr(GameAttributes.AUTH_TOKEN).get(), OPCODE_START_GAME);
 
 				// Envia o pacote criptografado
 				//int txSum = player.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
@@ -545,9 +610,10 @@ public class GameRoom {
 						Unpooled.wrappedBuffer(encryptedPayload),false);
 
 				// Thread.sleep(150);
-				player.getPlayerCtx().eventLoop().execute(() -> {
-					player.getPlayerCtx().writeAndFlush(finalPacket);
-				});
+				submitAction(() -> 
+				player.getPlayerCtxChannel().eventLoop().execute(() -> {
+					player.getPlayerCtxChannel().writeAndFlush(finalPacket);
+				}),player.getPlayerCtx());
 
 				// player.getPlayerCtx().eventLoop().schedule(() -> {
 				// player.getPlayerCtx().writeAndFlush(finalPacket);
@@ -583,27 +649,20 @@ public class GameRoom {
 		// for (PlayerSession playerInRoom : playersBySlot.values()) {
 		for (PlayerSession playerInRoom : recipients) {
 			try {
-				// Pega o contexto e a soma de pacotes para ESTE jogador específico.
-				// ChannelHandlerContext playerCtx =
-				// playerInRoom.getPlayerCtx().pipeline().firstContext(); // Pega o
-				// primeiro
-				// contexto
-				// no
-				// pipeline
-				//int playerTxSum = playerInRoom.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
-
 				// Gera um pacote com a sequência CORRETA para este jogador.
 				ByteBuf notifyPacket = PacketUtils.generatePacket(playerInRoom, OPCODE_ROOM_UPDATE, notifyPayload, true);
 
 				// Usamos writeAndFlush com um listener para capturar erros.
-				playerInRoom.getPlayerCtx().writeAndFlush(notifyPacket).addListener((ChannelFutureListener) future -> {
+				
+				submitAction(() -> 
+				playerInRoom.getPlayerCtxChannel().writeAndFlush(notifyPacket).addListener((ChannelFutureListener) future -> {
 					if (!future.isSuccess()) {
 						System.err.println("FALHA AO ENVIAR PACOTE DE TÚNEL para: " + playerInRoom.getNickName());
 						future.cause().printStackTrace();
 						// Caso o jogador nao esteja impossibilitado de receber pacotes.
-						playerInRoom.getPlayerCtx().close();
+						playerInRoom.getPlayerCtxChannel().close();
 					}
-				});
+				}),playerInRoom.getPlayerCtx());
 
 				// playerInRoom.getPlayerCtx().eventLoop().execute(() -> {
 				// Envia o pacote individualmente.
@@ -643,9 +702,10 @@ public class GameRoom {
 				ByteBuf notifyPacket = PacketUtils.generatePacket(playerInRoom, OPCODE_NOTIFY_JOIN,
 						notifyPayload.retainedDuplicate(),false);
 
-				playerInRoom.getPlayerCtx().eventLoop().execute(() -> {
-					playerInRoom.getPlayerCtx().writeAndFlush(notifyPacket);
-				});
+				submitAction(() -> 
+				playerInRoom.getPlayerCtxChannel().eventLoop().execute(() -> {
+					playerInRoom.getPlayerCtxChannel().writeAndFlush(notifyPacket);
+				}),playerInRoom.getPlayerCtx());
 			}
 		}
 
@@ -661,15 +721,13 @@ public class GameRoom {
 
 	private static final int OPCODE_PLAYER_LEFT = 0x3020;
 
-	public void notifyPlayerLeft(int leftPlayerSlot) {
+	public void notifyPlayerLeft(int leftPlayerSlot,boolean wasHost) {
 		// O payload é um short (2 bytes) contendo o ID do slot.
 		ByteBuf payload = Unpooled.buffer().writeShortLE(leftPlayerSlot);
 
-		// Itera sobre todos os jogadores restantes para notificá-los
 		// snapshot para evitar concorrência
-		// Collection<PlayerSession> recipients = new
-		// ArrayList<>(getPlayersBySlot().values());
-		for (PlayerSession playerInRoom : getPlayersBySlot().values()) {
+		Collection<PlayerSession> recipients = new ArrayList<>(getPlayersBySlot().values());
+		for (PlayerSession playerInRoom : recipients) {
 			// Pega a soma de pacotes para ESTE jogador específico.
 			//int playerTxSum = playerInRoom.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
 
@@ -678,9 +736,24 @@ public class GameRoom {
 					payload.retainedDuplicate(),false);
 
 			// Envia o pacote individualmente.
-			playerInRoom.getPlayerCtx().eventLoop().execute(() -> {
-				playerInRoom.getPlayerCtx().writeAndFlush(notifyPacket);
-			});
+			//playerInRoom.getPlayerCtxChannel().eventLoop().execute(() -> {
+				//playerInRoom.getPlayerCtxChannel().writeAndFlush(notifyPacket);
+			//});
+			
+			
+			playerInRoom.getPlayerCtxChannel().writeAndFlush(notifyPacket).addListener((ChannelFutureListener) future -> {
+	                if (future.isSuccess()) {
+	        			// Se quem saiu era o host, notifica sobre a migração.
+	        			if (wasHost) {
+	        				System.out.println("[DEBUG]: Entrou no if de washost" );
+	        				notifyHostMigration();
+	        				//room.submitAction(() -> room.notifyHostMigration());
+	        			}
+	                }
+	            });
+			
+
+			
 		}
 
 		payload.release();
@@ -727,8 +800,10 @@ public class GameRoom {
 					buffer.retainedDuplicate(),false);
 
 			// Envia o pacote individualmente.
-			playerInRoom.getPlayerCtx().eventLoop().execute(() -> {
-				playerInRoom.getPlayerCtx().writeAndFlush(notifyPacket);
+ 
+			// Envia o pacote individualmente.
+			playerInRoom.getPlayerCtxChannel().eventLoop().execute(() -> {
+				playerInRoom.getPlayerCtxChannel().writeAndFlush(notifyPacket);
 			});
 		}
 
@@ -739,39 +814,63 @@ public class GameRoom {
 	// *****************************FILA PARA PROCESSAR A
 	// SALA*****************************
 
-	// private final Queue<Runnable> actionQueue = new LinkedList<>();
-	private final Queue<Runnable> actionQueue = new LinkedList<>();
-	private boolean processing = false;
+    // Classe interna que associa a ação ao seu contexto do Netty
+    private static class QueuedAction {
+        final Runnable task;
+        final ChannelHandlerContext ctx;
 
-	// Método para enfileirar ações (thread-safe)
-	public synchronized void submitAction(Runnable action) {
-		// System.out.println("[SUBMIT] Adicionando ação: " + action);
-		actionQueue.add(action);
-		if (!processing) {
-			processing = true;
-			nextAction();
-		}
-	}
+        QueuedAction(Runnable task, ChannelHandlerContext ctx) {
+            this.task = task;
+            this.ctx = ctx;
+        }
+    }
 
-	private synchronized void nextAction() {
-		Runnable act = actionQueue.poll();
-		if (act != null) {
-			// System.out.println("[PROCESSANDO] Executando ação: " + act);
-			new Thread(() -> {
-				try {
-					Thread.sleep(100);
-					act.run();
-					// System.out.println("[OK] Ação finalizada: " + act);
-				} catch (Exception e) {
-					System.out.println("[ERRO] Exceção: " + e.getMessage());
-				} finally {
-					nextAction();
-				}
-			}).start();
-		} else {
-			processing = false;
-			// System.out.println("[FILA VAZIA]");
-		}
-	}
+    // Fila thread-safe para as ações
+    private final Queue<QueuedAction> actionQueue = new ConcurrentLinkedQueue<>();
+    private final AtomicBoolean processing = new AtomicBoolean(false);
+    
+    private static final ExecutorService workerPool = Executors.newFixedThreadPool(16);
+
+
+    // Enfileira ação + contexto
+    public void submitAction(Runnable action, ChannelHandlerContext ctx) {
+        actionQueue.add(new QueuedAction(action, ctx));
+        processNext(); // Tenta processar (só dispara se não estiver em processamento)
+    }
+
+    // Controle thread-safe: só um processador por vez
+    private void processNext() {
+        if (processing.compareAndSet(false, true)) {
+            nextAction();
+        }
+    }
+
+    private void nextAction() {
+        QueuedAction act = actionQueue.poll();
+        if (act != null) {
+            // Executa a ação no event loop certo do Netty (para evitar problema de concorrência no canal)
+        	
+        	//workerPool.submit(() -> {
+            act.ctx.executor().execute(() -> {
+                try {
+                    act.task.run();
+                } catch (Exception e) {
+                    System.out.println("[ERRO] Exceção em Room Action: " + e.getMessage());
+                    e.printStackTrace();
+                } finally {
+                    nextAction();
+                }
+            });
+            
+        	//});
+        } else {
+            // Ninguém na fila: libera o flag de processamento
+            processing.set(false);
+            // Confere se, enquanto processava, outra thread não enfileirou nova ação nesse meio tempo
+            if (!actionQueue.isEmpty()) {
+                processNext();
+            }
+        }
+    }
 
 }

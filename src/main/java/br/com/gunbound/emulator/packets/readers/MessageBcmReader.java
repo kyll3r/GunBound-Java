@@ -80,8 +80,8 @@ public class MessageBcmReader {
 		ByteBuf confirmationPacket = PacketUtils.generatePacket(player, OPCODE_MSG_BCM_RESPONSE, buffer,false);
 
 		// Envia o pacote individualmente.
-		player.getPlayerCtx().eventLoop().execute(() -> {
-			player.getPlayerCtx().writeAndFlush(confirmationPacket);
+		player.getPlayerCtxChannel().eventLoop().execute(() -> {
+			player.getPlayerCtxChannel().writeAndFlush(confirmationPacket);
 		});
 
 	}

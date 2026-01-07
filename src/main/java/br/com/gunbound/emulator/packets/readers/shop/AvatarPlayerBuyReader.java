@@ -55,11 +55,9 @@ public class AvatarPlayerBuyReader {
 
 			if (avatarData != null) {
 				int priceAvatar = avatarData.getPriceByGoldForI();
-				
-				PlayerAvatar highestAvatar = player.getAvatarWithHighestPlaceOrder();
-				String highestPlaceOrder = (highestAvatar != null) ? highestAvatar.getPlaceOrder() : null;
+				String highestPlaceOrder = player.getAvatarWithHighestPlaceOrder().getPlaceOrder();
 
-				// calculo do place order 
+				// calculo do place order (util apenas no WC pra frente)
 				if (highestPlaceOrder == null) {
 					highestPlaceOrder = "0";
 				} else {
@@ -172,7 +170,7 @@ public class AvatarPlayerBuyReader {
 		//int txSum = player.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
 		ByteBuf finalPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION, avatarData,false);
 
-		player.getPlayerCtx().writeAndFlush(finalPacket);
+		player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 
 	}
 		

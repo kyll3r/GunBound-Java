@@ -4,7 +4,6 @@ import br.com.gunbound.emulator.handlers.GameAttributes;
 import br.com.gunbound.emulator.model.entities.game.PlayerSession;
 import br.com.gunbound.emulator.packets.writers.RoomWriter;
 import br.com.gunbound.emulator.room.GameRoom;
-import br.com.gunbound.emulator.room.model.enums.GameMode;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,7 +24,7 @@ public class RoomChangeOptionReader {
 		}
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processChangeOption(payload, player, room));
+		room.submitAction(() -> processChangeOption(payload, player, room),ctx);
 	}
 
 	private static void processChangeOption(byte[] payload, PlayerSession player,

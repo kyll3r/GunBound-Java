@@ -95,7 +95,7 @@ public class GameResultReader {
 				PlayerSession player = entry.getValue();
 				//int playerTxSum = player.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
 				ByteBuf confirmationPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION, buffer,false);
-				player.getPlayerCtx().writeAndFlush(confirmationPacket);
+				player.getPlayerCtxChannel().writeAndFlush(confirmationPacket);
 
 			}
 
@@ -169,7 +169,7 @@ public class GameResultReader {
 			byte[] encryptedPayload;
 			try {
 				encryptedPayload = GunBoundCipher.gunboundDynamicEncrypt(payloadSend, player.getUserNameId(),
-						player.getPassword(), player.getPlayerCtx().attr(GameAttributes.AUTH_TOKEN).get(), OPCODE_RESULT);
+						player.getPassword(), player.getPlayerCtxChannel().attr(GameAttributes.AUTH_TOKEN).get(), OPCODE_RESULT);
 
 				// Gera o pacote final e envia
 				//int txSum = player.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
@@ -177,8 +177,8 @@ public class GameResultReader {
 						Unpooled.wrappedBuffer(encryptedPayload),false);
 
 				// Enviando packet
-				player.getPlayerCtx().eventLoop().execute(() -> {
-					player.getPlayerCtx().writeAndFlush(finalPacket);
+				player.getPlayerCtxChannel().eventLoop().execute(() -> {
+					player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 				});
 			} catch (Exception e) {
 				e.printStackTrace();

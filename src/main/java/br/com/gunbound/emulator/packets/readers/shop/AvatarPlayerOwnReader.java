@@ -65,7 +65,7 @@ public class AvatarPlayerOwnReader {
 		ByteBuf finalPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION, buffer,false);
 
 		// Thread.sleep(150);
-		player.getPlayerCtx().writeAndFlush(finalPacket);
+		player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 
 	}
 
@@ -115,7 +115,7 @@ public class AvatarPlayerOwnReader {
 		ByteBuf finalPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION, buffer,false);
 
 		// Thread.sleep(150);
-		player.getPlayerCtx().writeAndFlush(finalPacket);
+		player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 
 	}
 

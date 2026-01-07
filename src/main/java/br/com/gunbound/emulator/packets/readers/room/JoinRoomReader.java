@@ -187,7 +187,7 @@ public class JoinRoomReader {
 
 			try {
 				// Obtém o endereço remoto do jogador
-				InetSocketAddress remoteAddress = (InetSocketAddress) player.getPlayerCtx().remoteAddress();
+				InetSocketAddress remoteAddress = (InetSocketAddress) player.getPlayerCtxChannel().remoteAddress();
 
 				// Pega os bytes do IP DIRETAMENTE do objeto InetAddress, sem conversão para
 				// String Hex.

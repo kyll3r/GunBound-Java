@@ -14,7 +14,7 @@ public class RoomGameStartReader {
 			return;
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processStartGame(ctx, payload, player, room));
+		processStartGame(ctx, payload, player, room);
 	}
 
 	private static void processStartGame(ChannelHandlerContext ctx, byte[] payload, PlayerSession player,

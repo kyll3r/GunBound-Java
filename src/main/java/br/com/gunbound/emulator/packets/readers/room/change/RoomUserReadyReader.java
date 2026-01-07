@@ -26,7 +26,7 @@ public class RoomUserReadyReader {
 		
 		
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processReadyStatus(payload, player, room));
+		room.submitAction(() -> processReadyStatus(payload, player, room),ctx);
 	}
 
 	private static void processReadyStatus(byte[] payload, PlayerSession player,
@@ -56,7 +56,7 @@ public class RoomUserReadyReader {
 			//int playerTxSum = player.getPlayerCtx().attr(GameAttributes.PACKET_TX_SUM).get();
 			ByteBuf confirmationPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION,
 					Unpooled.wrappedBuffer(new byte[] {0x00,0x00}), true);
-			player.getPlayerCtx().writeAndFlush(confirmationPacket);
+			player.getPlayerCtxChannel().writeAndFlush(confirmationPacket);
 
 
 		} catch (Exception e) {

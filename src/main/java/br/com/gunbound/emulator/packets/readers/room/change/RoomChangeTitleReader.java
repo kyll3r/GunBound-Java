@@ -26,7 +26,7 @@ public class RoomChangeTitleReader {
 		}
 
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processChangeTitle(payload, player, room));
+		room.submitAction(() -> processChangeTitle(payload, player, room),ctx);
 	}
 
 	private static void processChangeTitle(byte[] payload, PlayerSession player,

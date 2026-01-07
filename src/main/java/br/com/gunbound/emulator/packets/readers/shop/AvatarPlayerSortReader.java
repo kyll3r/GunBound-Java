@@ -85,7 +85,7 @@ public class AvatarPlayerSortReader {
 		ByteBuf finalPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION, Unpooled.EMPTY_BUFFER,false);
 
 		// Thread.sleep(150);
-		player.getPlayerCtx().writeAndFlush(finalPacket);
+		player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 
 	}
 

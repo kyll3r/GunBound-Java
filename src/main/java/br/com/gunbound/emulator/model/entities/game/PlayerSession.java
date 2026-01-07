@@ -9,6 +9,7 @@ import br.com.gunbound.emulator.lobby.GunBoundLobby;
 import br.com.gunbound.emulator.model.entities.DTO.UserDTO;
 import br.com.gunbound.emulator.room.GameRoom;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
 
 public class PlayerSession {
 	private String userId;
@@ -37,7 +38,7 @@ public class PlayerSession {
 	private List<PlayerAvatar> playerAvatars = new ArrayList<PlayerAvatar>();
 
 	// registrar o contexto do camarada aqui
-	private Channel ctx;
+	private ChannelHandlerContext ctx;
 
 	// Gerencia do Lobby
 	private GunBoundLobby currentLobby;
@@ -66,8 +67,8 @@ public class PlayerSession {
 		this.totalScore = user.getTotalScore();
 		this.seasonScore = user.getSeasonScore();
 		// Level
-		this.rankCurrent = user.getTotalGrade();
-		this.rankSeason = user.getSeasonGrade();
+		this.rankCurrent = user.getTotalRank();
+		this.rankSeason = user.getSeasonRank();
 		// Ranking
 		this.totalRank = user.getTotalRank();
 		this.seasonRank = user.getSeasonRank();
@@ -84,7 +85,7 @@ public class PlayerSession {
 	}
 
 	// Construtor que usa os dados que vieram do Banco
-	public PlayerSession(UserDTO user, Channel ctx) {
+	public PlayerSession(UserDTO user, ChannelHandlerContext ctx) {
 
 		// Chama o construtor acima
 		this(user);
@@ -217,13 +218,21 @@ public class PlayerSession {
 	public int getGuildRank() {
 		return guildRank;
 	}
-
-	public Channel getPlayerCtx() {
+	
+	public ChannelHandlerContext getPlayerCtx() {
 		return this.ctx;
+	}
+
+	public Channel getPlayerCtxChannel() {
+		return this.ctx.channel();
 	}
 	
 	public int getCurrentTxSum() {
-		return this.ctx.attr(GameAttributes.PACKET_TX_SUM).get();
+		return this.ctx.channel().attr(GameAttributes.PACKET_TX_SUM).get();
+	}
+	
+	public byte[] getAuthToken() {
+		return this.ctx.channel().attr(GameAttributes.AUTH_TOKEN).get();
 	}
 
 	public GameRoom getCurrentRoom() {

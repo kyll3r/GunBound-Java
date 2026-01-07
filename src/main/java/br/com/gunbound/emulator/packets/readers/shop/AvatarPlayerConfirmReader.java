@@ -63,7 +63,7 @@ public class AvatarPlayerConfirmReader {
 		ByteBuf finalPacket = PacketUtils.generatePacket(player, OPCODE_CONFIRMATION, buffer, true);
 
 		// Thread.sleep(150);
-		player.getPlayerCtx().writeAndFlush(finalPacket);
+		player.getPlayerCtxChannel().writeAndFlush(finalPacket);
 
 	}
 

@@ -23,7 +23,7 @@ public class RoomSelectTankReader {
 
 		GameRoom room = player.getCurrentRoom();
 		// Empacota toda a lógica em um Runnable e submeta para a fila da sala!
-		room.submitAction(() -> processSelectTank(payload, player, room));
+		room.submitAction(() -> processSelectTank(payload, player, room),ctx);
 	}
 
 	private static void processSelectTank(byte[] payload, PlayerSession player, GameRoom room) {
@@ -51,7 +51,7 @@ public class RoomSelectTankReader {
 		ByteBuf successPacket = PacketUtils.generatePacket(player, OPCODE_SUCCESS_RESPONSE, Unpooled.EMPTY_BUFFER,
 				true);
 
-		player.getPlayerCtx().writeAndFlush(successPacket);
+		player.getPlayerCtxChannel().writeAndFlush(successPacket);
 
 		// TODO: Notificar os outros jogadores na sala sobre a seleção de tanque.
 		// Isso exigirá um novo método no RoomWriter e uma chamada de broadcast na
